@@ -126,22 +126,20 @@ function drawMicMeter(c,level,threshold) {
 }
 
 const LEVELS = [
-  { name:"LEVEL 1", desc:"plug the lamp into the wall!", outletX:580, outletY:200, aimSpeed:2.0, hitTol:32, obstacles:[] },
-  { name:"LEVEL 2", desc:"watch out for obstacles!", outletX:590, outletY:180, aimSpeed:2.5, hitTol:30,
+  { name:"LEVEL 1", desc:"plug the lamp into the wall!", outletX:580, outletY:200, aimSpeed:1.8, hitTol:32, accelNear:2.5, obstacles:[] },
+  { name:"LEVEL 2", desc:"watch out for obstacles!", outletX:590, outletY:180, aimSpeed:2.0, hitTol:30, accelNear:3.2,
     obstacles:[
       {type:"shelf",x:500,y:140,w:60,hitbox:{x:494,y:100,w:72,h:48}},
       {type:"plant",x:400,y:290,hitbox:{x:386,y:244,w:32,h:48}},
       {type:"boxes",x:280,y:290,hitbox:{x:278,y:242,w:40,h:50}},
     ]},
-  { name:"LEVEL 3", desc:"good luck with this one!", outletX:575, outletY:170, aimSpeed:3.8, hitTol:24,
-    aimWaves:[{freq:0.027,amp:0.65},{freq:0.047,amp:0.35}],
+  { name:"LEVEL 3", desc:"good luck with this one!", outletX:575, outletY:170, aimSpeed:2.2, hitTol:24, accelNear:4.0,
     obstacles:[
       {type:"shelf",x:504,y:120,w:56,hitbox:{x:498,y:80,w:68,h:48}},
       {type:"boxes",x:380,y:290,hitbox:{x:378,y:242,w:40,h:50}},
       {type:"cat",x:460,y:290,hitbox:{x:448,y:258,w:36,h:34},bounce:true,bounceMaxAmp:100,bounceSpeed:0.035},
     ]},
-  { name:"LEVEL 4", desc:"are you even real?!", outletX:600, outletY:155, aimSpeed:4.1, hitTol:22,
-    aimWaves:[{freq:0.031,amp:0.45},{freq:0.057,amp:0.3},{freq:0.019,amp:0.25}],
+  { name:"LEVEL 4", desc:"are you even real?!", outletX:600, outletY:155, aimSpeed:2.5, hitTol:22, accelNear:5.0,
     obstacles:[
       {type:"shelf",x:490,y:210,w:70,hitbox:{x:484,y:170,w:82,h:48}},
       {type:"shelf",x:514,y:110,w:50,hitbox:{x:508,y:70,w:62,h:48}},
@@ -155,7 +153,7 @@ const TABLE1={x:40,y:238,w:140,h:12};
 const LAMP_POS={x:116,y:230};
 const CORD_START={x:120,y:220};
 const OUTLET_X=580;
-const AIM_TOP=60,AIM_BOTTOM=270;
+const AIM_TOP=20,AIM_BOTTOM=278;
 
 const ST={START:0,LEVEL_INTRO:1,AIM:2,THROW:3,HIT:4,WIN:5,MISS:6,LOSE:7,BLOCKED:8,COMPLETE:9};
 
@@ -241,11 +239,11 @@ export default function LampGame() {
     const avg=m.samples.reduce((a,b)=>a+b,0)/m.samples.length;
     m.baseline=avg;
 
-    const threshold=Math.max(avg*1.3, 8);
+    const threshold=Math.max(avg*1.8, 15);
 
     if(m.cooldown>0){m.cooldown--;return {level:rms,threshold,triggered:false};}
 
-    if(rms>threshold+5) {
+    if(rms>threshold+12) {
       m.cooldown=25;
       return {level:rms,threshold,triggered:true};
     }
@@ -423,16 +421,13 @@ export default function LampGame() {
 
     if(s.state===ST.LEVEL_INTRO)s.introTimer++;
     if(s.state===ST.AIM){
-      if(lvl.aimWaves){
-        let wave=0;
-        for(const w of lvl.aimWaves) wave+=Math.sin(s.tick*w.freq)*w.amp;
-        const mid=(AIM_TOP+AIM_BOTTOM)/2, range=(AIM_BOTTOM-AIM_TOP)/2;
-        s.aimY=Math.max(AIM_TOP,Math.min(AIM_BOTTOM,mid+wave*range));
-      } else {
-        s.aimY+=lvl.aimSpeed*s.aimDir;
-        if(s.aimY>=AIM_BOTTOM){s.aimY=AIM_BOTTOM;s.aimDir=-1;}
-        if(s.aimY<=AIM_TOP){s.aimY=AIM_TOP;s.aimDir=1;}
-      }
+      const dist=Math.abs(s.aimY-lvl.outletY);
+      const maxDist=(AIM_BOTTOM-AIM_TOP)/2;
+      const proximity=1-Math.min(dist/maxDist,1);
+      const speed=lvl.aimSpeed+proximity*proximity*(lvl.accelNear||2.5);
+      s.aimY+=speed*s.aimDir;
+      if(s.aimY>=AIM_BOTTOM){s.aimY=AIM_BOTTOM;s.aimDir=-1;}
+      if(s.aimY<=AIM_TOP){s.aimY=AIM_TOP;s.aimDir=1;}
     }
     if(s.state===ST.THROW){
       s.throwProg+=0.045;
@@ -507,8 +502,7 @@ export default function LampGame() {
             </label>
             {inputMode==="audio"&&(
               <div style={{marginTop:8,fontSize:9,color:COLORS.mid,lineHeight:1.4,borderTop:`1px solid ${COLORS.light}`,paddingTop:8}}>
-                Clap or speak loudly to play.<br/>
-                Volume spike = throw action.<br/>
+                Say "Go" to throw the plug.<br/>
                 Mic level shown bottom-left.
               </div>
             )}
