@@ -125,27 +125,174 @@ function drawMicMeter(c,level,threshold) {
   c.fillStyle=COLORS.mid;c.font="7px monospace";c.textAlign="left";c.fillText("MIC",mx,my-4);
 }
 
+function drawCoatRack(c,x,y) {
+  // wall bracket backing
+  px(c,x-96,y,196,P*2,COLORS.shelf);px(c,x-96,y+P*2,196,P,"#6b5030");
+  // hooks (4 pegs)
+  const hookXs=[-72,-30,20,72];
+  for(const hx of hookXs){
+    px(c,x+hx-P,y-P*2,P*2,P*3,COLORS.dark);
+    px(c,x+hx,y-P*5,P*2,P*4,"#5a3e22");
+  }
+  // green jacket (hangs from hook at +20)
+  px(c,x+4,y+4,36,48,"#3a5e2a");px(c,x+8,y+8,28,36,"#4a7038");
+  px(c,x+4,y+4,16,16,"#3a5e2a");px(c,x+24,y+4,16,16,"#3a5e2a");
+  px(c,x+8,y+4,24,8,"#2e4a22");
+  // red bag (hangs from hook at -30)
+  px(c,x-42,y+8,24,28,"#c03030");px(c,x-40,y+10,20,22,"#d04040");
+  px(c,x-36,y+4,12,8,"#8a2020");px(c,x-34,y+2,8,P*2,"#6a1818");
+  // scarf/white coat (hangs from hook at -72)
+  px(c,x-80,y+6,16,36,COLORS.wall);px(c,x-78,y+8,12,28,COLORS.white);
+}
+
+function drawCuckooClock(c,x,y,pendulumLen) {
+  const clk="#7a4e28",clkD="#5a3818",clkL="#9a6840",face=COLORS.white;
+  // clock body
+  px(c,x-16,y,32,40,clk);px(c,x-14,y+2,28,36,clkD);
+  // roof/top triangle (stepped)
+  px(c,x-16,y-8,32,8,clk);px(c,x-12,y-14,24,6,clk);px(c,x-8,y-20,16,6,clk);px(c,x-4,y-24,8,4,clk);
+  // clock face circle
+  px(c,x-10,y+4,20,20,face);px(c,x-8,y+6,16,16,"#e8e4d9");
+  // bird head in clock face
+  px(c,x-4,y+8,8,8,"#c86820");px(c,x-2,y+10,4,4,"#e88830");
+  px(c,x+2,y+8,P,P,COLORS.dark);px(c,x-6,y+7,P,P,COLORS.dark);
+  px(c,x-2,y+8,P*2,P,"#e88830");
+  // door below face
+  px(c,x-6,y+26,12,12,clk);px(c,x-4,y+28,8,8,clkD);
+  // side details
+  px(c,x-16,y,P,40,clkL);px(c,x+16-P,y,P,40,clkD);
+  // pendulum rod
+  if(pendulumLen>0){
+    pxLine(c,x,y+42,x,y+42+pendulumLen,clk,P);
+    // pendulum bob
+    px(c,x-6,y+40+pendulumLen,12,12,clkL);px(c,x-4,y+42+pendulumLen,8,8,clk);
+  }
+}
+
+function drawFireplace(c,x,y,flameH) {
+  const brick="#8b3a1a",brickL="#a04a28",brickD="#6a2a10",box="#1a0e08";
+  const cEmber="#a02808",cHot="#c83c10",cWarm="#e06018",cOrange="#ee8820",cYellow="#f8c030",cTip="#fce860";
+  // mantel top
+  px(c,x-56,y-72,112,12,brickL);px(c,x-52,y-68,104,8,brick);
+  // side columns
+  px(c,x-56,y-60,16,60,brick);px(c,x+40,y-60,16,60,brick);
+  // brick rows on columns
+  for(let r=0;r<3;r++){px(c,x-56,y-52+r*20,14,P,brickD);px(c,x+42,y-48+r*20,14,P,brickD);}
+  // firebox (dark interior)
+  px(c,x-40,y-60,80,60,box);
+  // floor/base
+  px(c,x-60,y,120,P*2,brickD);px(c,x-56,y+P*2,112,P,brick);
+  // embers at base
+  px(c,x-20,y-P*3,8,P*2,cEmber);px(c,x-4,y-P*4,12,P*2,cEmber);px(c,x+10,y-P*3,8,P*2,cEmber);
+  // flames — tapered horizontal bands, wide at base → narrow at tip
+  if(flameH>0){
+    const fh=Math.floor(flameH);
+    const by=y-8; // base y (just above embers)
+    // Each band: [fractionOfHeight, halfWidth, color]
+    // Wide hot base tapers to a thin bright tip — fire shape, not tree
+    const bands=[
+      [0.00,32,cHot ],[0.08,28,cHot ],[0.14,26,cWarm],
+      [0.20,24,cWarm],[0.28,22,cOrange],[0.35,18,cOrange],
+      [0.43,14,cOrange],[0.50,12,cYellow],[0.58,10,cYellow],
+      [0.65, 8,cYellow],[0.72, 6,cTip ],[0.79, 4,cTip ],
+      [0.86, 4,cTip ],[0.92, P,cTip ],[0.97, P,cTip ],
+    ];
+    for(let i=0;i<bands.length-1;i++){
+      const[f0,hw0,col]=bands[i];
+      const[f1,,]=bands[i+1];
+      const sliceY=Math.floor(by-f1*fh);
+      const sliceH=Math.max(P,Math.floor((f1-f0)*fh));
+      // slight left/right jitter per row for organic waviness
+      const jit=(i%3===0?-P:i%3===1?0:P);
+      px(c,x-hw0+jit,sliceY,hw0*2,sliceH,col);
+    }
+    // Left side tongue (shorter, left-shifted)
+    px(c,x-28,by,12,P,cHot);
+    if(fh>24)px(c,x-26,by-Math.floor(fh*0.22),8,Math.floor(fh*0.22),cWarm);
+    if(fh>44)px(c,x-24,by-Math.floor(fh*0.44),4,Math.floor(fh*0.16),cOrange);
+    if(fh>64)px(c,x-24,by-Math.floor(fh*0.60),P,Math.floor(fh*0.10),cYellow);
+    // Right side tongue
+    px(c,x+16,by,12,P,cHot);
+    if(fh>24)px(c,x+16,by-Math.floor(fh*0.22),8,Math.floor(fh*0.22),cWarm);
+    if(fh>44)px(c,x+16,by-Math.floor(fh*0.44),4,Math.floor(fh*0.16),cOrange);
+    if(fh>64)px(c,x+16,by-Math.floor(fh*0.60),P,Math.floor(fh*0.10),cYellow);
+    // smoke
+    if(fh>60){c.globalAlpha=0.15*(fh-60)/60;px(c,x-14,by-fh-16,28,16,"#888");c.globalAlpha=1;}
+  }
+}
+
+function drawGrowingPlant(c,x,y,gh) {
+  // Fixed pot — never moves
+  px(c,x-10,y-20,20,20,COLORS.pot);px(c,x-12,y-22,24,P,COLORS.pot);
+  px(c,x-8,y-18,16,4,COLORS.potDark);px(c,x-8,y-22,16,P,"#6a5a40");
+  if(gh<=0) return;
+  const stemTop=y-22-Math.floor(gh);
+  // Stem grows upward
+  pxLine(c,x,y-22,x,stemTop,COLORS.plantDark,P);
+  // Leaf nodes appear at fixed intervals along the stem (every 28px)
+  const NODE_GAP=28;
+  const numNodes=Math.floor(gh/NODE_GAP);
+  for(let i=0;i<numNodes;i++){
+    const ny=y-22-(i+1)*NODE_GAP;
+    // alternate left/right to give branching look
+    const flip=(i%2===0)?1:-1;
+    px(c,x-P*4,ny-P,P*4,P*2,COLORS.plant);
+    px(c,x,ny-P,P*4,P*2,COLORS.plant);
+    px(c,x-P*3+flip*P*2,ny-P*3,P*3,P*2,COLORS.plantDark);
+    px(c,x+flip*P,ny-P*2,P*2,P*2,COLORS.plant);
+  }
+  // Top leaf cluster always at the growing tip
+  px(c,x-P*2,stemTop-P*2,P*4,P*2,COLORS.plant);
+  px(c,x-P,stemTop-P*4,P*2,P*3,COLORS.plant);
+  px(c,x-P*3,stemTop-P*3,P*2,P,COLORS.plantDark);
+}
+
+function drawFan(c,x,y,angle) {
+  const hub="#555",blade="#666",bladeL="#888";
+  c.save();c.translate(x,y);c.rotate(angle);
+  // 4 blades at 0, 90, 180, 270 degrees
+  for(let i=0;i<4;i++){
+    c.save();c.rotate(i*Math.PI/2);
+    // blade as tapered rectangle
+    c.fillStyle=blade;c.fillRect(-6,4,12,46);
+    c.fillStyle=bladeL;c.fillRect(-4,6,8,14);
+    c.fillStyle=bladeL;c.fillRect(-4,46,4,4);
+    c.restore();
+  }
+  c.restore();
+  // center hub (drawn without rotation)
+  px(c,x-8,y-8,16,16,hub);px(c,x-4,y-4,8,8,COLORS.dark);px(c,x-2,y-2,4,4,bladeL);
+}
+
 const LEVELS = [
-  { name:"LEVEL 1", desc:"plug the lamp into the wall!", outletX:580, outletY:200, aimSpeed:1.8, hitTol:32, accelNear:2.5, obstacles:[] },
-  { name:"LEVEL 2", desc:"watch out for obstacles!", outletX:590, outletY:180, aimSpeed:2.0, hitTol:30, accelNear:3.2,
+  { name:"LEVEL 1", desc:"plug the lamp into the wall!", outletX:580, outletY:200, aimSpeed:1.8, hitTol:32, accelNear:2.5, obstacles:[], windowLarge:true },
+  { name:"LEVEL 2", desc:"mind the coat rack!", outletX:580, outletY:240, aimSpeed:2.0, hitTol:30, accelNear:3.2,
     obstacles:[
-      {type:"shelf",x:500,y:140,w:60,hitbox:{x:494,y:100,w:72,h:48}},
-      {type:"plant",x:400,y:290,hitbox:{x:386,y:244,w:32,h:48}},
-      {type:"boxes",x:280,y:290,hitbox:{x:278,y:242,w:40,h:50}},
+      {type:"coatrack", x:356, y:102, hitbox:{x:258,y:100,w:200,h:52}},
     ]},
-  { name:"LEVEL 3", desc:"good luck with this one!", outletX:575, outletY:170, aimSpeed:2.2, hitTol:24, accelNear:4.0,
+  { name:"LEVEL 3", desc:"hope you don't get burned!", outletX:580, outletY:200, aimSpeed:2.2, hitTol:28, accelNear:3.8,
     obstacles:[
       {type:"shelf",x:504,y:120,w:56,hitbox:{x:498,y:80,w:68,h:48}},
-      {type:"boxes",x:380,y:290,hitbox:{x:378,y:242,w:40,h:50}},
-      {type:"cat",x:460,y:290,hitbox:{x:448,y:258,w:36,h:34},bounce:true,bounceMaxAmp:100,bounceSpeed:0.035},
+      {type:"cat",x:520,y:290,hitbox:{x:508,y:258,w:36,h:34},bounce:true,bounceMaxAmp:70,bounceSpeed:0.035},
+      {type:"fireplace",x:296,y:290,grow:true,growMin:0,growMax:140,growSpeed:0.55,hitbox:{x:256,y:290,w:84,h:0}},
     ]},
-  { name:"LEVEL 4", desc:"are you even real?!", outletX:600, outletY:155, aimSpeed:2.5, hitTol:22, accelNear:5.0,
+  { name:"LEVEL 4", desc:"watch the clock!", outletX:580, outletY:180, aimSpeed:2.4, hitTol:26, accelNear:4.2,
     obstacles:[
-      {type:"shelf",x:490,y:210,w:70,hitbox:{x:484,y:170,w:82,h:48}},
-      {type:"shelf",x:514,y:110,w:50,hitbox:{x:508,y:70,w:62,h:48}},
-      {type:"cat",x:340,y:290,hitbox:{x:328,y:258,w:36,h:34},bounce:true,bounceMaxAmp:150,bounceSpeed:0.045},
-      {type:"plant",x:410,y:290,hitbox:{x:396,y:244,w:32,h:48}},
-      {type:"boxes",x:470,y:290,hitbox:{x:468,y:242,w:40,h:50}},
+      {type:"shelf",x:504,y:120,w:56,hitbox:{x:498,y:80,w:68,h:48}},
+      {type:"cat",x:400,y:290,hitbox:{x:388,y:258,w:36,h:34},bounce:true,bounceMaxAmp:160,bounceSpeed:0.04},
+      {type:"plant",x:360,y:290,hitbox:{x:346,y:244,w:32,h:48}},
+      {type:"clock",x:476,y:74,grow:true,growDown:true,growMin:28,growMax:120,growSpeed:0.4,hitbox:{x:468,y:116,w:16,h:0}},
+    ]},
+  { name:"LEVEL 5", desc:"plants just keep growing!", outletX:580, outletY:160, aimSpeed:2.6, hitTol:24, accelNear:4.6,
+    obstacles:[
+      {type:"plant-grow",x:355,y:290,grow:true,growMin:44,growMax:180,growSpeed:0.45,hitbox:{x:341,y:290,w:28,h:0}},
+      {type:"plant-grow",x:535,y:290,grow:true,growMin:44,growMax:130,growSpeed:0.55,hitbox:{x:521,y:290,w:28,h:0}},
+    ]},
+  { name:"LEVEL 6", desc:"things are getting breezy!", outletX:580, outletY:185, aimSpeed:2.8, hitTol:20, accelNear:5.0,
+    obstacles:[
+      {type:"shelf",x:504,y:120,w:56,hitbox:{x:498,y:80,w:68,h:48}},
+      {type:"plant",x:360,y:290,hitbox:{x:346,y:244,w:32,h:48}},
+      {type:"fan",x:490,y:170,rotate:true,rotateSpeed:Math.PI/60,fanParams:{cx:490,cy:170,bladeLen:50,bladeW:14},hitbox:{x:440,y:120,w:100,h:100}},
     ]},
 ];
 
@@ -157,24 +304,79 @@ const AIM_TOP=20,AIM_BOTTOM=278;
 
 const ST={START:0,LEVEL_INTRO:1,AIM:2,THROW:3,HIT:4,WIN:5,MISS:6,LOSE:7,BLOCKED:8,COMPLETE:9};
 
-function updateBounceObs(obs,tick){
+function updateObs(obs,tick){
   for(const o of obs){
-    if(!o.bounce) continue;
-    const sinVal=Math.sin(tick*o.bounceSpeed);
-    if(o._prevSin!==undefined&&Math.sign(o._prevSin)!==Math.sign(sinVal)){
-      o._amp=Math.random()*o.bounceMaxAmp;
+    // bounce (cat)
+    if(o.bounce){
+      const sinVal=Math.sin(tick*o.bounceSpeed);
+      if(o._prevSin!==undefined&&Math.sign(o._prevSin)!==Math.sign(sinVal)){
+        o._amp=Math.random()*o.bounceMaxAmp;
+      }
+      if(o._amp===undefined) o._amp=Math.random()*o.bounceMaxAmp;
+      o._prevSin=sinVal;
+      o._dy=Math.abs(sinVal)*o._amp;
     }
-    if(o._amp===undefined) o._amp=Math.random()*o.bounceMaxAmp;
-    o._prevSin=sinVal;
-    o._dy=Math.abs(sinVal)*o._amp;
+    // grow (fireplace flames, cuckoo pendulum, plants)
+    if(o.grow){
+      if(o._growH===undefined) o._growH=o.growMin;
+      if(o._growDir===undefined) o._growDir=1;
+      o._growH+=o.growSpeed*o._growDir;
+      if(o._growH>=o.growMax){o._growH=o.growMax;o._growDir=-1;}
+      if(o._growH<=o.growMin){o._growH=o.growMin;o._growDir=1;}
+    }
+    // rotate (fan)
+    if(o.rotate){
+      if(o._angle===undefined) o._angle=0;
+      o._angle-=o.rotateSpeed; // anti-clockwise
+    }
   }
 }
 function cordHitsObstacle(pts,obs){
   for(const o of obs){
-    const dy=o._dy||0;
+    // bounce obstacle (cat) — hitbox shifts up by _dy
+    if(o.bounce){
+      const dy=o._dy||0;
+      const h=o.hitbox;
+      for(const[cx,cy]of pts){if(cx>=h.x&&cx<=h.x+h.w&&cy>=h.y-dy&&cy<=h.y-dy+h.h)return o;}
+      continue;
+    }
+    // grow obstacle — grows upward (fireplace/plants) or downward (clock pendulum)
+    if(o.grow){
+      const gh=o._growH||0;
+      const h=o.hitbox;
+      if(o.growDown){
+        // pendulum: h.y is the top, hitbox extends downward by gh
+        for(const[cx,cy]of pts){if(cx>=h.x&&cx<=h.x+h.w&&cy>=h.y&&cy<=h.y+gh)return o;}
+      } else {
+        // flames/plants: h.y is the base (bottom), hitbox extends upward by gh
+        for(const[cx,cy]of pts){if(cx>=h.x&&cx<=h.x+h.w&&cy>=h.y-gh&&cy<=h.y)return o;}
+      }
+      continue;
+    }
+    // rotate obstacle (fan) — check each cord point against 4 rotated blade rects
+    if(o.rotate){
+      const angle=o._angle||0;
+      const {cx:fx,cy:fy,bladeLen,bladeW}=o.fanParams;
+      for(const[px2,py2]of pts){
+        // translate to fan-local coords then un-rotate
+        const dx=px2-fx,dy=py2-fy;
+        const cos=Math.cos(-angle),sin=Math.sin(-angle);
+        const lx=dx*cos-dy*sin,ly=dx*sin+dy*cos;
+        // check all 4 blade orientations (every 90°)
+        for(let i=0;i<4;i++){
+          const a=i*Math.PI/2;
+          const bcos=Math.cos(-a),bsin=Math.sin(-a);
+          const bx=lx*bcos-ly*bsin,by=lx*bsin+ly*bcos;
+          if(Math.abs(bx)<=bladeW/2&&by>=-4&&by<=bladeLen)return o;
+        }
+      }
+      continue;
+    }
+    // static obstacle (coatrack, shelf, plant, boxes)
     const h=o.hitbox;
-    for(const[cx,cy]of pts){if(cx>=h.x&&cx<=h.x+h.w&&cy>=h.y-dy&&cy<=h.y-dy+h.h)return o;}
-  }return null;
+    for(const[cx,cy]of pts){if(cx>=h.x&&cx<=h.x+h.w&&cy>=h.y&&cy<=h.y+h.h)return o;}
+  }
+  return null;
 }
 
 export default function LampGame() {
@@ -289,10 +491,17 @@ export default function LampGame() {
   const drawObs=useCallback((c,obs,tick)=>{
     for(const o of obs){
       const dy=o._dy||0;
+      const gh=o._growH||0;
+      const angle=o._angle||0;
       if(o.type==="shelf")drawShelf(c,o.x,o.y,o.w);
       if(o.type==="plant")drawPlant(c,o.x,o.y);
       if(o.type==="boxes")drawBoxes(c,o.x,o.y);
       if(o.type==="cat")drawCat(c,o.x,o.y-dy,tick);
+      if(o.type==="coatrack")drawCoatRack(c,o.x,o.y);
+      if(o.type==="clock")drawCuckooClock(c,o.x,o.y,gh);
+      if(o.type==="fireplace")drawFireplace(c,o.x,o.y,gh);
+      if(o.type==="plant-grow")drawGrowingPlant(c,o.x,o.y,gh);
+      if(o.type==="fan")drawFan(c,o.x,o.y,angle);
     }
   },[]);
 
@@ -300,13 +509,16 @@ export default function LampGame() {
     const canvas=canvasRef.current;if(!canvas)return;
     const ctx=canvas.getContext("2d");const s=g.current;s.tick++;
     const lvl=LEVELS[s.level],st=s.state,lit=st===ST.WIN||st===ST.HIT;
-    updateBounceObs(lvl.obstacles,s.tick);
+    updateObs(lvl.obstacles,s.tick);
     const oY=lvl.outletY,oX=lvl.outletX,csx=CORD_START.x;
     const isAudio=inputMode==="audio";
 
     ctx.fillStyle=COLORS.bg;ctx.fillRect(0,0,W,H);
     px(ctx,0,290,W,P,COLORS.light);
-    drawWindow(ctx,300,80,100,80,s.tick);
+    if(lvl.windowLarge)drawWindow(ctx,265,84,246,196,s.tick);
+    else drawWindow(ctx,104,72,132,96,s.tick);
+    // Level 1: static cat + plant on window sill
+    if(s.level===0){drawPlant(ctx,362,284);drawCat(ctx,464,284,s.tick);}
     drawWall(ctx);
     if(st===ST.AIM||st===ST.THROW)drawTargetZone(ctx,oX,oY,lvl.hitTol,s.tick,s.aimY,st===ST.AIM);
     drawOutlet(ctx,oX,oY);
@@ -396,7 +608,7 @@ export default function LampGame() {
       // main text
       ctx.textAlign="center";
       ctx.font="bold 32px monospace";ctx.fillStyle=COLORS.dark;ctx.fillText("YOU DID IT!",cx,100);
-      ctx.font="14px monospace";ctx.fillStyle=COLORS.mid;ctx.fillText("all 4 levels complete",cx,124);
+      ctx.font="14px monospace";ctx.fillStyle=COLORS.mid;ctx.fillText("all 6 levels complete",cx,124);
       ctx.font="11px monospace";ctx.fillStyle=COLORS.mid;ctx.fillText("the lamp is finally home  ✦",cx,148);
       // pixel cord snaking across bottom of screen
       const cordPts=cordCurve(120,220,OUTLET_X,180,-30,24);
@@ -474,7 +686,7 @@ export default function LampGame() {
 
   return (
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",background:"#d4d0c6",fontFamily:"monospace",padding:16,userSelect:"none"}}>
-      <div style={{position:"relative"}}>
+      <div style={{position:"relative",transform:"scale(1.2)",transformOrigin:"center center"}}>
         <div style={{border:`${P}px solid ${COLORS.dark}`,imageRendering:"pixelated",boxShadow:`${P*2}px ${P*2}px 0 ${COLORS.mid}`}}>
           <canvas ref={canvasRef} width={W} height={H} style={{display:"block",imageRendering:"pixelated",width:W,height:H}} tabIndex={0}/>
         </div>
