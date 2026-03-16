@@ -288,7 +288,7 @@ const LEVELS = [
       {type:"plant-grow",x:355,y:290,grow:true,growMin:44,growMax:180,growSpeed:0.45,hitbox:{x:341,y:290,w:28,h:0}},
       {type:"plant-grow",x:535,y:290,grow:true,growMin:44,growMax:130,growSpeed:0.55,hitbox:{x:521,y:290,w:28,h:0}},
     ]},
-  { name:"LEVEL 6", desc:"things are getting breezy!", outletX:580, outletY:185, aimSpeed:2.8, hitTol:20, accelNear:5.0,
+  { name:"LEVEL 6", desc:"things are getting breezy!", outletX:580, outletY:230, aimSpeed:2.8, hitTol:20, accelNear:5.0,
     obstacles:[
       {type:"shelf",x:504,y:120,w:56,hitbox:{x:498,y:80,w:68,h:48}},
       {type:"plant",x:360,y:290,hitbox:{x:346,y:244,w:32,h:48}},
